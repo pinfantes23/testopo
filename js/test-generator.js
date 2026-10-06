@@ -1,50 +1,147 @@
 (() => {
+
+
+    /* =========================================================
+       BLOQUES DE TEMAS
+       ========================================================= */
+
     const BLOQUES = {
+
         juridicas: {
             nombre: "Jurídicas",
             icono: "⚖️",
             desde: 1,
             hasta: 26
         },
-        sociales: {
-            nombre: "Sociales",
-            icono: "👥",
-            desde: 27,
-            hasta: 37
-        },
+
         cientificas: {
             nombre: "Científicas",
             icono: "🔬",
             desde: 38,
             hasta: 45
+        },
+
+        tecnologicas: {
+            nombre: "Tecnológicas",
+            icono: "💻",
+            desde: 27,
+            hasta: 37
         }
+
     };
 
-    const CANTIDADES = [10, 20, 30, 50, 70, 100];
+
+    const CANTIDADES = [
+        10,
+        20,
+        30,
+        50,
+        70,
+        100
+    ];
+
+
+    /* =========================================================
+       ESTADO
+       ========================================================= */
 
     let preguntas = [];
+
     let examen = [];
+
     let respuestas = {};
+
     let riesgos = {};
+
     let pagina = 0;
+
     let cantidad = 10;
+
     let temasSeleccionados = [];
 
-    const porId = id => document.getElementById(id);
+
+    /* =========================================================
+       TEST FALLADOS
+       ========================================================= */
+
+    let testFallados = [];
+
+
+    /* =========================================================
+       ESTADÍSTICAS
+       ========================================================= */
+
+    let estadisticas = {
+
+        testsRealizados: 0,
+
+        totalPreguntas: 0,
+
+        respondidas: 0,
+
+        aciertos: 0,
+
+        fallos: 0,
+
+        blancas: 0,
+
+        aciertosRiesgo: 0,
+
+        fallosRiesgo: 0,
+
+        porTema: {}
+
+    };
+
+
+    /* =========================================================
+       UTILIDADES
+       ========================================================= */
+
+    const porId = id =>
+        document.getElementById(id);
+
 
     function mezclar(lista) {
-        const copia = [...lista];
 
-        for (let i = copia.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [copia[i], copia[j]] = [copia[j], copia[i]];
+        const resultado =
+            [...lista];
+
+
+        for (
+            let i = resultado.length - 1;
+            i > 0;
+            i--
+        ) {
+
+            const j =
+                Math.floor(
+                    Math.random() *
+                    (i + 1)
+                );
+
+
+            [
+                resultado[i],
+                resultado[j]
+            ] = [
+                resultado[j],
+                resultado[i]
+            ];
+
         }
 
-        return copia;
+
+        return resultado;
+
     }
 
+
     function escapar(texto) {
-        return String(texto ?? "").replace(
+
+        return String(
+            texto ?? ""
+        ).replace(
             /[&<>"']/g,
             caracter => ({
                 "&": "&amp;",
@@ -54,823 +151,1951 @@
                 "'": "&#39;"
             })[caracter]
         );
+
     }
 
-    function crearContenedor() {
-        let contenedor = porId("test-generator-screen");
 
-        if (!contenedor) {
-            contenedor = document.createElement("div");
-            contenedor.id = "test-generator-screen";
-            document.body.appendChild(contenedor);
+    /* =========================================================
+       ESTADÍSTICAS
+       ========================================================= */
+
+    function obtenerNombreTema(tema) {
+
+        if (
+            tema === undefined ||
+            tema === null ||
+            String(tema).trim() === ""
+        ) {
+
+            return "Sin tema";
+
         }
 
-        contenedor.className = "test-overlay";
 
-        return contenedor;
+        return String(tema);
+
     }
 
-    function mostrar(html) {
-        crearContenedor().innerHTML = html;
+
+    function crearEstadisticasTema() {
+
+        return {
+
+            total: 0,
+
+            respondidas: 0,
+
+            aciertos: 0,
+
+            fallos: 0,
+
+            blancas: 0,
+
+            aciertosRiesgo: 0,
+
+            fallosRiesgo: 0
+
+        };
+
     }
 
-    async function abrir() {
-        preguntas = await TestAppDB.getAllQuestions();
 
-        if (!preguntas.length) {
-            alert("Todavía no hay preguntas importadas.");
+    function registrarEstadisticaPregunta(
+        item
+    ) {
+
+        if (
+            !item ||
+            !item.pregunta
+        ) {
+
+            return;
+
+        }
+
+
+        const respuesta =
+            item.respuesta || null;
+
+
+        const acertada =
+            Boolean(
+                respuesta
+            ) &&
+            Boolean(
+                item.acertada
+            );
+
+
+        const riesgo =
+            Boolean(
+                item.riesgo
+            );
+
+
+        const tema =
+            obtenerNombreTema(
+                item.pregunta.tema
+            );
+
+
+        if (
+            !estadisticas.porTema[tema]
+        ) {
+
+            estadisticas.porTema[tema] =
+                crearEstadisticasTema();
+
+        }
+
+
+        const datosTema =
+            estadisticas.porTema[tema];
+
+
+        /*
+         * Toda pregunta entra en el total.
+         */
+
+        estadisticas.totalPreguntas++;
+
+        datosTema.total++;
+
+
+        /*
+         * En blanco.
+         */
+
+        if (!respuesta) {
+
+            estadisticas.blancas++;
+
+            datosTema.blancas++;
+
+            return;
+
+        }
+
+
+        /*
+         * Pregunta respondida.
+         */
+
+        estadisticas.respondidas++;
+
+        datosTema.respondidas++;
+
+
+        /*
+         * Acierto / fallo.
+         */
+
+        if (acertada) {
+
+            estadisticas.aciertos++;
+
+            datosTema.aciertos++;
+
+
+            if (riesgo) {
+
+                estadisticas.aciertosRiesgo++;
+
+                datosTema.aciertosRiesgo++;
+
+            }
+
+        } else {
+
+            estadisticas.fallos++;
+
+            datosTema.fallos++;
+
+
+            if (riesgo) {
+
+                estadisticas.fallosRiesgo++;
+
+                datosTema.fallosRiesgo++;
+
+            }
+
+        }
+
+    }
+
+
+    function registrarEstadisticasTest(
+        detalle
+    ) {
+
+        if (!Array.isArray(detalle)) {
             return;
         }
 
-        document.body.classList.add("test-generator-active");
 
-        mostrarConfiguracion();
+        estadisticas.testsRealizados++;
+
+
+        detalle.forEach(
+            registrarEstadisticaPregunta
+        );
+
     }
 
+
+    function obtenerEstadisticas() {
+
+        return JSON.parse(
+            JSON.stringify(
+                estadisticas
+            )
+        );
+
+    }
+
+
+    /* =========================================================
+       TEST FALLADOS
+       ========================================================= */
+
+    function normalizarId(id) {
+
+        return String(id);
+
+    }
+
+
+    function registrarPreguntaFallada(id) {
+
+        const clave =
+            normalizarId(id);
+
+
+        const existe =
+            testFallados.some(
+                item =>
+                    normalizarId(item) ===
+                    clave
+            );
+
+
+        if (!existe) {
+
+            testFallados.push(id);
+
+        }
+
+    }
+
+
+    function eliminarPreguntaFallada(id) {
+
+        const clave =
+            normalizarId(id);
+
+
+        testFallados =
+            testFallados.filter(
+                item =>
+                    normalizarId(item) !==
+                    clave
+            );
+
+    }
+
+
+    function moverPreguntaFalladaAlFinal(
+        id
+    ) {
+
+        eliminarPreguntaFallada(id);
+
+        testFallados.push(id);
+
+    }
+
+
+    function registrarResultadoPregunta({
+
+        id,
+
+        respuesta,
+
+        acertada,
+
+        tema = null,
+
+        riesgo = false
+
+    }) {
+
+        if (!respuesta) {
+            return;
+        }
+
+
+        /*
+         * Actualizamos Test fallados.
+         */
+
+        if (acertada) {
+
+            eliminarPreguntaFallada(id);
+
+        } else {
+
+            moverPreguntaFalladaAlFinal(id);
+
+        }
+
+
+        /*
+         * También guardamos esta respuesta
+         * en las estadísticas.
+         *
+         * Esto permite que las respuestas
+         * de Test fallados formen parte de
+         * la evolución.
+         */
+
+        registrarEstadisticaPregunta({
+
+            pregunta: {
+                id,
+                tema
+            },
+
+            respuesta,
+
+            acertada,
+
+            riesgo
+
+        });
+
+    }
+
+
+    function actualizarTestFallados(
+        detalle
+    ) {
+
+        detalle.forEach(
+            item => {
+
+                /*
+                 * En blanco no modifica
+                 * Test fallados.
+                 */
+
+                if (!item.respuesta) {
+                    return;
+                }
+
+
+                if (item.acertada) {
+
+                    eliminarPreguntaFallada(
+                        item.pregunta.id
+                    );
+
+                } else {
+
+                    registrarPreguntaFallada(
+                        item.pregunta.id
+                    );
+
+                }
+
+            }
+        );
+
+    }
+
+
+    /* =========================================================
+       CONTENEDOR
+       ========================================================= */
+
+    function crearContenedor() {
+
+        let contenedor =
+            porId(
+                "test-generator-screen"
+            );
+
+
+        if (!contenedor) {
+
+            contenedor =
+                document.createElement(
+                    "div"
+                );
+
+
+            contenedor.id =
+                "test-generator-screen";
+
+
+            document.body.appendChild(
+                contenedor
+            );
+
+        }
+
+
+        contenedor.className =
+            "test-overlay";
+
+
+        return contenedor;
+
+    }
+
+
+    function mostrar(html) {
+
+        crearContenedor().innerHTML =
+            html;
+
+    }
+
+
+    /* =========================================================
+       ABRIR TEST A LA CARTA
+       ========================================================= */
+
+    async function abrir() {
+
+        preguntas =
+            await TestAppDB.getAllQuestions();
+
+
+        if (!preguntas.length) {
+
+            alert(
+                "Todavía no hay preguntas importadas."
+            );
+
+            return;
+
+        }
+
+
+        document.body.classList.add(
+            "test-generator-active"
+        );
+
+
+        mostrarConfiguracion();
+
+    }
+
+
+    /* =========================================================
+       CONFIGURACIÓN
+       ========================================================= */
+
     function mostrarConfiguracion() {
+
+        const bloquesHTML =
+            Object.entries(BLOQUES)
+                .map(
+                    ([clave, bloque]) =>
+                        crearBloqueTema(
+                            clave,
+                            bloque
+                        )
+                )
+                .join("");
+
+
         mostrar(`
+
             <div class="test-config">
 
-                <header class="test-config-header">
+                <div class="test-config-header">
+
                     <div>
-                        <span class="test-config-kicker">
+
+                        <div class="test-config-kicker">
                             TEST A LA CARTA
-                        </span>
+                        </div>
 
                         <h2>
-                            Crea tu test
+                            Configura tu test
                         </h2>
 
                         <p>
-                            Selecciona los temas que quieres practicar y el número de preguntas.
+                            Selecciona los temas que quieras practicar.
                         </p>
+
                     </div>
 
+
                     <button
+                        type="button"
                         class="test-close-button"
-                        id="cerrar-configuracion"
-                        aria-label="Cerrar"
-                    >
-                        ×
+                        id="cerrar-test-config">
+
+                        ✕
+
                     </button>
-                </header>
+
+                </div>
+
 
                 <section class="test-config-section">
 
                     <div class="test-section-title">
-                        <div>
-                            <h3>
-                                Bloques de temas
-                            </h3>
 
-                            <p>
-                                Puedes combinar temas de diferentes bloques.
-                            </p>
-                        </div>
+                        <h3>
+                            Temas
+                        </h3>
+
+                        <p>
+                            Abre un bloque para seleccionar sus temas.
+                        </p>
+
                     </div>
+
 
                     <div class="temas-container">
-                        ${Object.entries(BLOQUES)
-                            .map(([id, bloque]) => crearBloqueTema(id, bloque))
-                            .join("")}
+
+                        ${bloquesHTML}
+
                     </div>
 
                 </section>
+
 
                 <section class="test-config-section">
 
                     <div class="test-section-title">
-                        <div>
-                            <h3>
-                                Número de preguntas
-                            </h3>
 
-                            <p>
-                                Elige cuántas preguntas tendrá el test.
-                            </p>
-                        </div>
+                        <h3>
+                            Número de preguntas
+                        </h3>
+
                     </div>
+
 
                     <div class="cantidad-grid">
+
                         ${CANTIDADES.map(
                             numero => `
-                                <button
-                                    type="button"
-                                    class="cantidad-button ${numero === 10 ? "selected" : ""}"
-                                    data-cantidad="${numero}"
-                                >
-                                    ${numero}
-                                </button>
-                            `
+
+                            <button
+                                type="button"
+                                class="cantidad-button ${
+                                    numero === cantidad
+                                        ? "selected"
+                                        : ""
+                                }"
+                                data-cantidad="${numero}">
+
+                                ${numero}
+
+                            </button>
+
+                        `
                         ).join("")}
+
                     </div>
 
-                    <p class="cantidad-info" id="cantidad-info">
-                        Selecciona al menos un tema.
-                    </p>
+
+                    <div class="cantidad-info">
+
+                        <span id="cantidad-seleccionada">
+
+                            ${cantidad} preguntas
+
+                        </span>
+
+                    </div>
 
                 </section>
 
+
                 <div class="test-config-footer">
+
                     <button
+                        type="button"
                         class="test-primary-button"
-                        id="empezar-test"
-                        disabled
-                    >
-                        Empezar test
+                        id="crear-test">
+
+                        Crear test
+
                     </button>
+
                 </div>
 
             </div>
+
         `);
 
-        conectarConfiguracion();
+
+        prepararEventosConfiguracion();
+
         actualizarConfiguracion();
+
     }
 
-    function crearBloqueTema(id, bloque) {
-        const temas = obtenerTemasDelBloque(bloque);
+
+    /* =========================================================
+       CREAR BLOQUE
+       ========================================================= */
+
+    function crearBloqueTema(
+        id,
+        bloque
+    ) {
+
+        const temas =
+            obtenerTemasDelBloque(
+                bloque
+            );
+
 
         return `
+
             <div
                 class="tema-bloque"
-                data-bloque-contenedor="${id}"
-            >
+                data-bloque="${id}">
+
 
                 <button
                     type="button"
                     class="tema-bloque-header"
                     data-toggle-bloque="${id}"
-                    aria-expanded="false"
-                >
+                    aria-expanded="false">
+
                     <span>
-                        ${bloque.icono} ${bloque.nombre}
+
+                        ${bloque.icono}
+
+                        ${escapar(
+                            bloque.nombre
+                        )}
+
                     </span>
+
                 </button>
 
+
                 <div
-                    class="tema-bloque-panel"
-                    id="panel-${id}"
-                    hidden
-                >
+                    class="tema-bloque-contenido"
+                    data-contenido-bloque="${id}"
+                    style="display:none;">
+
 
                     <div class="tema-bloque-actions">
+
                         <button
                             type="button"
                             class="test-secondary-button"
-                            data-marcar-bloque="${id}"
-                        >
+                            data-marcar-bloque="${id}">
+
                             Marcar todos
+
                         </button>
+
                     </div>
 
+
                     <div class="tema-grid">
-                        ${temas
-                            .map(tema => {
-                                const total = preguntas.filter(
-                                    pregunta =>
-                                        Number(pregunta.tema) === tema
-                                ).length;
 
-                                return `
-                                    <label class="tema-card">
+                        ${temas.map(
+                            tema => `
 
-                                        <input
-                                            type="checkbox"
-                                            class="tema-checkbox"
-                                            data-bloque="${id}"
-                                            value="${tema}"
-                                        >
+                            <label
+                                class="tema-card"
+                                data-tarjeta-tema="${tema}">
 
-                                        <span class="tema-card-content">
 
-                                            <span class="tema-number">
-                                                ${tema}
-                                            </span>
+                                <input
+                                    type="checkbox"
+                                    class="tema-checkbox"
+                                    data-tema="${tema}"
+                                    value="${tema}">
 
-                                            <span class="tema-text">
-                                                <strong>
-                                                    Tema ${tema}
-                                                </strong>
 
-                                                <small>
-                                                    ${total} preguntas
-                                                </small>
-                                            </span>
+                                <span class="tema-card-content">
 
-                                            <span class="tema-check">
-                                                ✓
-                                            </span>
+                                    <span class="tema-number">
 
-                                        </span>
+                                        ${tema}
 
-                                    </label>
-                                `;
-                            })
-                            .join("")}
+                                    </span>
+
+
+                                    <span class="tema-text">
+
+                                        <strong>
+                                            Tema ${tema}
+                                        </strong>
+
+                                        <small>
+                                            ${contarPreguntasTema(tema)}
+                                            preguntas
+                                        </small>
+
+                                    </span>
+
+
+                                    <span class="tema-check">
+
+                                        ✓
+
+                                    </span>
+
+                                </span>
+
+                            </label>
+
+                        `).join("")}
+
                     </div>
 
                 </div>
 
             </div>
+
         `;
+
     }
 
-    function obtenerTemasDelBloque(bloque) {
+
+    /* =========================================================
+       CONTAR PREGUNTAS DE UN TEMA
+       ========================================================= */
+
+    function contarPreguntasTema(
+        tema
+    ) {
+
+        return preguntas.filter(
+            pregunta =>
+                String(
+                    pregunta.tema
+                ) ===
+                String(tema)
+        ).length;
+
+    }
+
+
+    /* =========================================================
+       OBTENER TEMAS
+       ========================================================= */
+
+    function obtenerTemasDelBloque(
+        bloque
+    ) {
+
+        const temas =
+            new Set();
+
+
+        for (
+            let i = bloque.desde;
+            i <= bloque.hasta;
+            i++
+        ) {
+
+            temas.add(
+                String(i)
+            );
+
+        }
+
+
+        preguntas.forEach(
+            pregunta => {
+
+                if (
+                    pregunta.tema === undefined ||
+                    pregunta.tema === null
+                ) {
+
+                    return;
+
+                }
+
+
+                const numero =
+                    parseInt(
+                        pregunta.tema,
+                        10
+                    );
+
+
+                if (
+                    Number.isInteger(numero) &&
+                    numero >= bloque.desde &&
+                    numero <= bloque.hasta
+                ) {
+
+                    temas.add(
+                        String(numero)
+                    );
+
+                }
+
+            }
+        );
+
+
         return [
-            ...new Set(
-                preguntas
-                    .map(p => Number(p.tema))
-                    .filter(
-                        tema =>
-                            tema >= bloque.desde &&
-                            tema <= bloque.hasta
-                    )
+            ...temas
+        ].sort(
+            (a, b) =>
+                Number(a) -
+                Number(b)
+        );
+
+    }
+
+
+    /* =========================================================
+       EVENTOS CONFIGURACIÓN
+       ========================================================= */
+
+    function prepararEventosConfiguracion() {
+
+        const cerrar =
+            porId(
+                "cerrar-test-config"
+            );
+
+
+        if (cerrar) {
+
+            cerrar.addEventListener(
+                "click",
+                cerrarConfiguracion
+            );
+
+        }
+
+
+        document
+            .querySelectorAll(
+                "[data-toggle-bloque]"
             )
-        ].sort((a, b) => a - b);
-    }
+            .forEach(
+                boton => {
 
-    function conectarConfiguracion() {
-        document
-            .querySelectorAll("[data-toggle-bloque]")
-            .forEach(boton => {
-                boton.onclick = () => {
-                    const id = boton.dataset.toggleBloque;
-                    const panel = porId(`panel-${id}`);
+                    boton.addEventListener(
+                        "click",
+                        evento => {
 
-                    const abierto =
-                        !panel.hasAttribute("hidden");
+                            evento.preventDefault();
 
-                    if (abierto) {
-                        panel.setAttribute("hidden", "");
-                    } else {
-                        panel.removeAttribute("hidden");
-                    }
-
-                    boton.setAttribute(
-                        "aria-expanded",
-                        String(!abierto)
-                    );
-                };
-            });
-
-        document
-            .querySelectorAll(".tema-checkbox")
-            .forEach(checkbox => {
-                checkbox.onchange = actualizarConfiguracion;
-            });
-
-        document
-            .querySelectorAll("[data-marcar-bloque]")
-            .forEach(boton => {
-                boton.onclick = () => {
-                    const bloque = boton.dataset.marcarBloque;
-
-                    const checks = [
-                        ...document.querySelectorAll(
-                            `.tema-checkbox[data-bloque="${bloque}"]`
-                        )
-                    ];
-
-                    const todosMarcados =
-                        checks.length > 0 &&
-                        checks.every(check => check.checked);
-
-                    checks.forEach(check => {
-                        check.checked = !todosMarcados;
-                    });
-
-                    actualizarConfiguracion();
-                };
-            });
-
-        document
-            .querySelectorAll("[data-cantidad]")
-            .forEach(boton => {
-                boton.onclick = () => {
-                    if (boton.disabled) {
-                        return;
-                    }
-
-                    cantidad = Number(
-                        boton.dataset.cantidad
-                    );
-
-                    document
-                        .querySelectorAll("[data-cantidad]")
-                        .forEach(otro => {
-                            otro.classList.toggle(
-                                "selected",
-                                Number(
-                                    otro.dataset.cantidad
-                                ) === cantidad
+                            alternarBloque(
+                                boton.dataset
+                                    .toggleBloque
                             );
-                        });
 
-                    actualizarConfiguracion();
-                };
-            });
+                        }
+                    );
 
-        porId("empezar-test").onclick = comenzar;
-        porId("cerrar-configuracion").onclick = cerrar;
+                }
+            );
+
+
+        document
+            .querySelectorAll(
+                "[data-marcar-bloque]"
+            )
+            .forEach(
+                boton => {
+
+                    boton.addEventListener(
+                        "click",
+                        evento => {
+
+                            evento.preventDefault();
+
+                            evento.stopPropagation();
+
+
+                            const clave =
+                                boton.dataset
+                                    .marcarBloque;
+
+
+                            const bloque =
+                                BLOQUES[clave];
+
+
+                            if (!bloque) {
+                                return;
+                            }
+
+
+                            const checkboxes =
+                                [
+                                    ...document.querySelectorAll(
+                                        `[data-contenido-bloque="${clave}"] .tema-checkbox`
+                                    )
+                                ];
+
+
+                            const todosMarcados =
+                                checkboxes.length > 0 &&
+                                checkboxes.every(
+                                    checkbox =>
+                                        checkbox.checked
+                                );
+
+
+                            checkboxes.forEach(
+                                checkbox => {
+
+                                    checkbox.checked =
+                                        !todosMarcados;
+
+                                    actualizarAspectoTema(
+                                        checkbox
+                                    );
+
+                                }
+                            );
+
+
+                            boton.textContent =
+                                todosMarcados
+                                    ? "Marcar todos"
+                                    : "Desmarcar todos";
+
+
+                            actualizarConfiguracion();
+
+                        }
+                    );
+
+                }
+            );
+
+
+        document
+            .querySelectorAll(
+                ".tema-checkbox"
+            )
+            .forEach(
+                checkbox => {
+
+                    checkbox.addEventListener(
+                        "change",
+                        () => {
+
+                            actualizarAspectoTema(
+                                checkbox
+                            );
+
+                            actualizarConfiguracion();
+
+                        }
+                    );
+
+
+                    actualizarAspectoTema(
+                        checkbox
+                    );
+
+                }
+            );
+
+
+        document
+            .querySelectorAll(
+                "[data-cantidad]"
+            )
+            .forEach(
+                boton => {
+
+                    boton.addEventListener(
+                        "click",
+                        () => {
+
+                            cantidad =
+                                Number(
+                                    boton.dataset
+                                        .cantidad
+                                );
+
+
+                            document
+                                .querySelectorAll(
+                                    "[data-cantidad]"
+                                )
+                                .forEach(
+                                    item =>
+                                        item.classList.remove(
+                                            "selected"
+                                        )
+                                );
+
+
+                            boton.classList.add(
+                                "selected"
+                            );
+
+
+                            const info =
+                                porId(
+                                    "cantidad-seleccionada"
+                                );
+
+
+                            if (info) {
+
+                                info.textContent =
+                                    `${cantidad} preguntas`;
+
+                            }
+
+                        }
+                    );
+
+                }
+            );
+
+
+        const crear =
+            porId(
+                "crear-test"
+            );
+
+
+        if (crear) {
+
+            crear.addEventListener(
+                "click",
+                comenzarTest
+            );
+
+        }
+
     }
+
+
+    /* =========================================================
+       ASPECTO TEMA
+       ========================================================= */
+
+    function actualizarAspectoTema(
+        checkbox
+    ) {
+
+        if (!checkbox) {
+            return;
+        }
+
+
+        const tarjeta =
+            checkbox.closest(
+                ".tema-card"
+            );
+
+
+        if (!tarjeta) {
+            return;
+        }
+
+
+        tarjeta.classList.toggle(
+            "selected",
+            checkbox.checked
+        );
+
+
+        tarjeta.classList.toggle(
+            "is-selected",
+            checkbox.checked
+        );
+
+
+        tarjeta.setAttribute(
+            "aria-checked",
+            checkbox.checked
+                ? "true"
+                : "false"
+        );
+
+    }
+
+
+    /* =========================================================
+       ABRIR / CERRAR BLOQUE
+       ========================================================= */
+
+    function alternarBloque(
+        id
+    ) {
+
+        const bloque =
+            document.querySelector(
+                `[data-bloque="${id}"]`
+            );
+
+
+        if (!bloque) {
+            return;
+        }
+
+
+        const cabecera =
+            bloque.querySelector(
+                "[data-toggle-bloque]"
+            );
+
+
+        const contenido =
+            bloque.querySelector(
+                `[data-contenido-bloque="${id}"]`
+            );
+
+
+        if (
+            !cabecera ||
+            !contenido
+        ) {
+
+            return;
+        }
+
+
+        const abierto =
+            cabecera.getAttribute(
+                "aria-expanded"
+            ) ===
+            "true";
+
+
+        const nuevoEstado =
+            !abierto;
+
+
+        cabecera.setAttribute(
+            "aria-expanded",
+            String(nuevoEstado)
+        );
+
+
+        contenido.style.display =
+            nuevoEstado
+                ? "block"
+                : "none";
+
+    }
+
+
+    /* =========================================================
+       ACTUALIZAR CONFIGURACIÓN
+       ========================================================= */
 
     function actualizarConfiguracion() {
-        temasSeleccionados = [
-            ...document.querySelectorAll(
-                ".tema-checkbox:checked"
-            )
-        ].map(checkbox => Number(checkbox.value));
 
-        const disponibles = preguntas.filter(
-            pregunta =>
-                temasSeleccionados.includes(
-                    Number(pregunta.tema)
+        temasSeleccionados =
+            [
+                ...document.querySelectorAll(
+                    ".tema-checkbox:checked"
                 )
-        );
+            ].map(
+                checkbox =>
+                    String(
+                        checkbox.dataset.tema
+                    )
+            );
 
-        const total = disponibles.length;
-        const info = porId("cantidad-info");
-
-        if (!total) {
-            info.textContent =
-                "Selecciona al menos un tema.";
-
-            porId("empezar-test").disabled = true;
-        } else {
-            info.textContent =
-                `${total} preguntas disponibles para tu selección.`;
-
-            porId("empezar-test").disabled = false;
-        }
 
         document
-            .querySelectorAll("[data-cantidad]")
-            .forEach(boton => {
-                const numero = Number(
-                    boton.dataset.cantidad
+            .querySelectorAll(
+                ".tema-checkbox"
+            )
+            .forEach(
+                actualizarAspectoTema
+            );
+
+
+        const disponibles =
+            temasSeleccionados.length
+                ? preguntas.filter(
+                    pregunta =>
+                        temasSeleccionados.includes(
+                            String(
+                                pregunta.tema
+                            )
+                        )
+                ).length
+                : preguntas.length;
+
+
+        const cantidadReal =
+            Math.min(
+                cantidad,
+                disponibles
+            );
+
+
+        const cantidadInfo =
+            porId(
+                "cantidad-seleccionada"
+            );
+
+
+        if (cantidadInfo) {
+
+            cantidadInfo.textContent =
+                disponibles
+                    ? `${cantidadReal} preguntas`
+                    : "0 preguntas";
+
+        }
+
+
+        document
+            .querySelectorAll(
+                "[data-marcar-bloque]"
+            )
+            .forEach(
+                boton => {
+
+                    const clave =
+                        boton.dataset
+                            .marcarBloque;
+
+
+                    const checkboxes =
+                        [
+                            ...document.querySelectorAll(
+                                `[data-contenido-bloque="${clave}"] .tema-checkbox`
+                            )
+                        ];
+
+
+                    const todos =
+                        checkboxes.length > 0 &&
+                        checkboxes.every(
+                            checkbox =>
+                                checkbox.checked
+                        );
+
+
+                    boton.textContent =
+                        todos
+                            ? "Desmarcar todos"
+                            : "Marcar todos";
+
+                }
+            );
+
+    }
+
+
+    /* =========================================================
+       COMENZAR TEST
+       ========================================================= */
+
+    function comenzarTest() {
+
+        let disponibles;
+
+
+        if (
+            temasSeleccionados.length
+        ) {
+
+            disponibles =
+                preguntas.filter(
+                    pregunta =>
+                        temasSeleccionados.includes(
+                            String(
+                                pregunta.tema
+                            )
+                        )
                 );
 
-                boton.disabled = numero > total;
-            });
+        } else {
 
-        if (total && cantidad > total) {
-            const validas = CANTIDADES.filter(
-                numero => numero <= total
-            );
+            disponibles =
+                [...preguntas];
 
-            cantidad = validas.length
-                ? validas[validas.length - 1]
-                : 10;
-
-            document
-                .querySelectorAll("[data-cantidad]")
-                .forEach(boton => {
-                    boton.classList.toggle(
-                        "selected",
-                        Number(
-                            boton.dataset.cantidad
-                        ) === cantidad
-                    );
-                });
         }
-    }
 
-    function comenzar() {
-        const disponibles = preguntas.filter(
-            pregunta =>
-                temasSeleccionados.includes(
-                    Number(pregunta.tema)
-                )
-        );
 
         if (!disponibles.length) {
-            return;
-        }
 
-        if (disponibles.length < cantidad) {
             alert(
-                `Solo hay ${disponibles.length} preguntas disponibles.`
+                "No hay preguntas disponibles para los temas seleccionados."
             );
 
             return;
         }
 
-        examen = mezclar(disponibles).slice(0, cantidad);
+
+        const cantidadReal =
+            Math.min(
+                cantidad,
+                disponibles.length
+            );
+
+
+        examen =
+            mezclar(
+                disponibles
+            ).slice(
+                0,
+                cantidadReal
+            );
+
 
         respuestas = {};
+
         riesgos = {};
+
         pagina = 0;
 
+
         mostrarPregunta();
+
     }
 
-    function mostrarPregunta() {
-        const pregunta = examen[pagina];
-        const respuesta =
-            respuestas[pregunta.id] ?? null;
 
-        const total = examen.length;
+    /* =========================================================
+       MOSTRAR PREGUNTA
+       ========================================================= */
+
+    function mostrarPregunta() {
+
+        const pregunta =
+            examen[pagina];
+
+
+        if (!pregunta) {
+            return;
+        }
+
+
+        const respuesta =
+            respuestas[
+                pregunta.id
+            ] ?? null;
+
+
+        const porcentaje =
+            (
+                (pagina + 1) /
+                examen.length
+            ) * 100;
+
 
         const opciones = [
-            ["A", pregunta.respuesta_a],
-            ["B", pregunta.respuesta_b],
-            ["C", pregunta.respuesta_c]
-        ].filter(
-            ([, texto]) =>
-                typeof texto === "string" &&
-                texto.trim() !== ""
-        );
+
+            {
+                letra: "A",
+                texto:
+                    pregunta.respuesta_a
+            },
+
+            {
+                letra: "B",
+                texto:
+                    pregunta.respuesta_b
+            },
+
+            {
+                letra: "C",
+                texto:
+                    pregunta.respuesta_c
+            }
+
+        ];
+
 
         mostrar(`
+
             <div class="test-running">
 
-                <header class="test-running-header">
+                <div class="test-running-header">
 
                     <button
+                        type="button"
                         class="test-icon-button"
-                        id="abandonar-test"
-                        aria-label="Salir"
-                    >
+                        id="cerrar-test-running">
+
                         ←
+
                     </button>
+
 
                     <div class="test-running-progress">
 
                         <span>
-                            Pregunta ${pagina + 1} de ${total}
+                            Pregunta
+                            ${pagina + 1}
+                            de
+                            ${examen.length}
                         </span>
 
+
                         <div class="progress-track">
+
                             <div
                                 class="progress-value"
-                                style="width:${((pagina + 1) / total) * 100}%"
-                            ></div>
+                                style="width:${porcentaje}%">
+                            </div>
+
                         </div>
 
                     </div>
 
-                </header>
+                </div>
 
-                <main class="question-container">
+
+                <div class="question-container">
 
                     <div class="question-meta">
-                        <span>
-                            Pregunta ${pagina + 1}
-                        </span>
 
                         <span>
-                            Tema ${escapar(pregunta.tema)}
+                            Tema
+                            ${escapar(
+                                pregunta.tema
+                            )}
                         </span>
+
                     </div>
 
-                    <article class="question-card">
+
+                    <div class="question-card">
+
                         <h2>
-                            ${escapar(pregunta.enunciado)}
+                            ${escapar(
+                                pregunta.enunciado
+                            )}
                         </h2>
-                    </article>
+
+                    </div>
+
 
                     <div class="answers-container">
-                        ${opciones
-                            .map(
-                                ([letra, texto]) => `
-                                    <button
-                                        type="button"
-                                        class="answer-button ${
-                                            respuesta === letra
-                                                ? "selected"
-                                                : ""
-                                        }"
-                                        data-respuesta="${letra}"
-                                    >
 
-                                        <span class="answer-letter">
-                                            ${letra}
-                                        </span>
+                        ${opciones.map(
+                            opcion => `
 
-                                        <span class="answer-text">
-                                            ${escapar(texto)}
-                                        </span>
+                            <button
+                                type="button"
+                                class="answer-button ${
+                                    respuesta === opcion.letra
+                                        ? "selected"
+                                        : ""
+                                }"
+                                data-respuesta="${opcion.letra}">
 
-                                    </button>
-                                `
-                            )
-                            .join("")}
+                                <span class="answer-letter">
+                                    ${opcion.letra}
+                                </span>
+
+                                <span class="answer-text">
+                                    ${escapar(
+                                        opcion.texto
+                                    )}
+                                </span>
+
+                            </button>
+
+                        `
+                        ).join("")}
+
                     </div>
+
 
                     <div
                         class="risk-container ${
-                            respuesta ? "visible" : ""
-                        }"
-                    >
-                        <button
-                            type="button"
-                            class="risk-button ${
-                                riesgos[pregunta.id]
-                                    ? "active"
-                                    : ""
-                            }"
-                            id="marcar-riesgo"
-                        >
-                            ${
-                                riesgos[pregunta.id]
-                                    ? "✓ Respuesta arriesgada"
-                                    : "⚡ Arriesgar"
-                            }
-                        </button>
+                            respuesta
+                                ? "visible"
+                                : ""
+                        }">
+
+                        ${
+                            respuesta
+                                ? `
+
+                                    <button
+                                        type="button"
+                                        class="risk-button ${
+                                            riesgos[
+                                                pregunta.id
+                                            ]
+                                                ? "active"
+                                                : ""
+                                        }"
+                                        id="marcar-riesgo">
+
+                                        ⚠️
+
+                                        ${
+                                            riesgos[
+                                                pregunta.id
+                                            ]
+                                                ? "Marcada como riesgo"
+                                                : "Marcar como riesgo"
+                                        }
+
+                                    </button>
+
+                                `
+                                : ""
+                        }
+
                     </div>
 
-                </main>
+                </div>
 
-                <nav class="test-navigation">
+
+                <div class="test-navigation">
 
                     <button
                         type="button"
                         class="navigation-button secondary"
-                        id="anterior"
-                        ${pagina === 0 ? "disabled" : ""}
-                    >
-                        ← Anterior
+                        id="pregunta-anterior"
+                        ${
+                            pagina === 0
+                                ? "disabled"
+                                : ""
+                        }>
+
+                        Anterior
+
                     </button>
 
-                    ${
-                        pagina < total - 1
-                            ? `
-                                <button
-                                    type="button"
-                                    class="navigation-button primary"
-                                    id="siguiente"
-                                >
-                                    Siguiente →
-                                </button>
-                            `
-                            : `
-                                <button
-                                    type="button"
-                                    class="navigation-button primary"
-                                    id="finalizar"
-                                >
-                                    Finalizar test
-                                </button>
-                            `
-                    }
-
-                </nav>
-
-            </div>
-        `);
-
-        document
-    .querySelectorAll("[data-respuesta]")
-    .forEach(boton => {
-        boton.onclick = () => {
-            const nuevaRespuesta =
-                boton.dataset.respuesta;
-
-            if (
-                respuestas[pregunta.id] ===
-                nuevaRespuesta
-            ) {
-                delete respuestas[pregunta.id];
-                delete riesgos[pregunta.id];
-            } else {
-                respuestas[pregunta.id] =
-                    nuevaRespuesta;
-            }
-
-            mostrarPregunta();
-        };
-    });
-
-        /*
-         * El riesgo SOLO se puede marcar cuando
-         * existe una respuesta.
-         *
-         * Una pregunta en blanco nunca será riesgo.
-         */
-        porId("marcar-riesgo").onclick = () => {
-            if (!respuestas[pregunta.id]) {
-                return;
-            }
-
-            riesgos[pregunta.id] =
-                !riesgos[pregunta.id];
-
-            mostrarPregunta();
-        };
-
-        porId("anterior").onclick = () => {
-            if (pagina > 0) {
-                pagina--;
-                mostrarPregunta();
-            }
-        };
-
-        if (porId("siguiente")) {
-            porId("siguiente").onclick = () => {
-
-                /*
-                 * Si no hay respuesta, permanece en blanco.
-                 *
-                 * Si hay riesgo, se conserva.
-                 */
-                if (!respuestas[pregunta.id]) {
-                    delete riesgos[pregunta.id];
-                }
-
-                pagina++;
-
-                mostrarPregunta();
-            };
-        }
-
-        if (porId("finalizar")) {
-            porId("finalizar").onclick = () => {
-                finalizar();
-            };
-        }
-
-        porId("abandonar-test").onclick = () => {
-            if (
-                confirm(
-                    "¿Quieres salir? Perderás las respuestas de este test."
-                )
-            ) {
-                cerrar();
-            }
-        };
-    }
-
-    function calcularNota(aciertos, fallos, total) {
-        const puntos = Math.max(
-            0,
-            aciertos - fallos / 2
-        );
-
-        return total
-            ? (puntos / total) * 10
-            : 0;
-    }
-
-    function finalizar() {
-        const detalle = examen.map(pregunta => {
-            const respuesta =
-                respuestas[pregunta.id] ?? null;
-
-            const correcta =
-                pregunta.respuesta_correcta;
-
-            const acertada =
-                Boolean(respuesta) &&
-                respuesta === correcta;
-
-            return {
-                pregunta,
-                respuesta,
-                correcta,
-                acertada,
-                riesgo: Boolean(
-                    riesgos[pregunta.id]
-                )
-            };
-        });
-
-        /*
-         * =========================================
-         * ESTADÍSTICAS REALES
-         * =========================================
-         *
-         * Las preguntas con riesgo quedan fuera
-         * completamente de la nota real.
-         *
-         * Las preguntas en blanco tampoco cuentan.
-         */
-
-        const aciertos = detalle.filter(
-            d =>
-                d.respuesta &&
-                d.acertada &&
-                !d.riesgo
-        ).length;
-
-        const fallos = detalle.filter(
-            d =>
-                d.respuesta &&
-                !d.acertada &&
-                !d.riesgo
-        ).length;
-
-        const blancas = detalle.filter(
-            d => !d.respuesta
-        ).length;
-
-        /*
-         * =========================================
-         * ESTADÍSTICAS DE RIESGO
-         * =========================================
-         */
-
-        const aciertosRiesgo = detalle.filter(
-            d =>
-                d.respuesta &&
-                d.acertada &&
-                d.riesgo
-        ).length;
-
-        const fallosRiesgo = detalle.filter(
-            d =>
-                d.respuesta &&
-                !d.acertada &&
-                d.riesgo
-        ).length;
-
-        /*
-         * =========================================
-         * NOTA REAL
-         * =========================================
-         *
-         * No se contabiliza ningún acierto ni fallo
-         * que esté marcado como riesgo.
-         */
-
-        const nota = calcularNota(
-            aciertos,
-            fallos,
-            examen.length
-        );
-
-        /*
-         * =========================================
-         * NOTA CON RIESGO
-         * =========================================
-         *
-         * Aquí sí incluimos TODAS las preguntas
-         * contestadas:
-         *
-         * - Correctas normales
-         * - Correctas con riesgo
-         * - Falladas normales
-         * - Falladas con riesgo
-         *
-         * Las blancas siguen siendo blancas.
-         */
-
-        const aciertosConRiesgo = detalle.filter(
-            d =>
-                d.respuesta &&
-                d.acertada
-        ).length;
-
-        const fallosConRiesgo = detalle.filter(
-            d =>
-                d.respuesta &&
-                !d.acertada
-        ).length;
-
-        const notaConRiesgo = calcularNota(
-            aciertosConRiesgo,
-            fallosConRiesgo,
-            examen.length
-        );
-
-        mostrarResultados({
-            detalle,
-            aciertos,
-            fallos,
-            blancas,
-            aciertosRiesgo,
-            fallosRiesgo,
-            aciertosConRiesgo,
-            fallosConRiesgo,
-            nota,
-            notaConRiesgo
-        });
-    }
-
-    function mostrarResultados(resultado) {
-        const {
-            detalle,
-            aciertos,
-            fallos,
-            blancas,
-            aciertosRiesgo,
-            fallosRiesgo,
-            nota,
-            notaConRiesgo
-        } = resultado;
-
-        mostrar(`
-            <div class="test-results">
-
-                <header class="results-header">
 
                     <button
                         type="button"
-                        class="test-icon-button"
-                        id="volver-inicio"
-                    >
-                        ←
+                        class="navigation-button primary"
+                        id="pregunta-siguiente">
+
+                        ${
+                            pagina ===
+                            examen.length - 1
+                                ? "Finalizar"
+                                : "Siguiente"
+                        }
+
                     </button>
+
+                </div>
+
+            </div>
+
+        `);
+
+
+        document
+            .querySelectorAll(
+                "[data-respuesta]"
+            )
+            .forEach(
+                boton => {
+
+                    boton.addEventListener(
+                        "click",
+                        () => {
+
+                            const nuevaRespuesta =
+                                boton.dataset
+                                    .respuesta;
+
+
+                            if (
+                                respuestas[
+                                    pregunta.id
+                                ] ===
+                                nuevaRespuesta
+                            ) {
+
+                                delete respuestas[
+                                    pregunta.id
+                                ];
+
+                                delete riesgos[
+                                    pregunta.id
+                                ];
+
+                            } else {
+
+                                respuestas[
+                                    pregunta.id
+                                ] =
+                                    nuevaRespuesta;
+
+                            }
+
+
+                            mostrarPregunta();
+
+                        }
+                    );
+
+                }
+            );
+
+
+        const riesgo =
+            porId(
+                "marcar-riesgo"
+            );
+
+
+        if (riesgo) {
+
+            riesgo.addEventListener(
+                "click",
+                () => {
+
+                    if (
+                        !respuestas[
+                            pregunta.id
+                        ]
+                    ) {
+
+                        return;
+                    }
+
+
+                    riesgos[
+                        pregunta.id
+                    ] =
+                        !riesgos[
+                            pregunta.id
+                        ];
+
+
+                    mostrarPregunta();
+
+                }
+            );
+
+        }
+
+
+        const anterior =
+            porId(
+                "pregunta-anterior"
+            );
+
+
+        if (anterior) {
+
+            anterior.addEventListener(
+                "click",
+                () => {
+
+                    if (pagina > 0) {
+
+                        pagina--;
+
+                        mostrarPregunta();
+
+                    }
+
+                }
+            );
+
+        }
+
+
+        const siguiente =
+            porId(
+                "pregunta-siguiente"
+            );
+
+
+        if (siguiente) {
+
+            siguiente.addEventListener(
+                "click",
+                () => {
+
+                    if (
+                        pagina ===
+                        examen.length - 1
+                    ) {
+
+                        finalizar();
+
+                    } else {
+
+                        pagina++;
+
+                        mostrarPregunta();
+
+                    }
+
+                }
+            );
+
+        }
+
+
+        const cerrarTest =
+            porId(
+                "cerrar-test-running"
+            );
+
+
+        if (cerrarTest) {
+
+            cerrarTest.addEventListener(
+                "click",
+                cerrar
+            );
+
+        }
+
+    }
+
+
+    /* =========================================================
+       NOTA
+       ========================================================= */
+
+    function calcularNota(
+        aciertos,
+        fallos,
+        total
+    ) {
+
+        if (!total) {
+            return 0;
+        }
+
+
+        const nota =
+            (
+                (
+                    aciertos -
+                    (fallos / 3)
+                ) /
+                total
+            ) *
+            10;
+
+
+        return Math.max(
+            0,
+            nota
+        );
+
+    }
+
+
+    /* =========================================================
+       FINALIZAR
+       ========================================================= */
+
+    function finalizar() {
+
+        const detalle =
+            examen.map(
+                pregunta => {
+
+                    const respuesta =
+                        respuestas[
+                            pregunta.id
+                        ] ?? null;
+
+
+                    const correcta =
+                        pregunta.respuesta_correcta;
+
+
+                    const acertada =
+                        Boolean(
+                            respuesta
+                        ) &&
+                        String(
+                            respuesta
+                        ).toUpperCase() ===
+                        String(
+                            correcta
+                        ).toUpperCase();
+
+
+                    return {
+
+                        pregunta,
+
+                        respuesta,
+
+                        correcta,
+
+                        acertada,
+
+                        riesgo:
+                            Boolean(
+                                riesgos[
+                                    pregunta.id
+                                ]
+                            )
+
+                    };
+
+                }
+            );
+
+
+        /*
+         * Test fallados.
+         */
+
+        actualizarTestFallados(
+            detalle
+        );
+
+
+        /*
+         * Estadísticas acumuladas.
+         */
+
+        registrarEstadisticasTest(
+            detalle
+        );
+
+
+        const respondidas =
+            detalle.filter(
+                item =>
+                    Boolean(
+                        item.respuesta
+                    )
+            );
+
+
+        const aciertos =
+            respondidas.filter(
+                item =>
+                    item.acertada
+            ).length;
+
+
+        const fallos =
+            respondidas.filter(
+                item =>
+                    !item.acertada
+            ).length;
+
+
+        const blancas =
+            detalle.filter(
+                item =>
+                    !item.respuesta
+            ).length;
+
+
+        const aciertosRiesgo =
+            detalle.filter(
+                item =>
+                    item.riesgo &&
+                    item.acertada
+            ).length;
+
+
+        const fallosRiesgo =
+            detalle.filter(
+                item =>
+                    item.riesgo &&
+                    item.respuesta &&
+                    !item.acertada
+            ).length;
+
+
+        const nota =
+            calcularNota(
+                aciertos,
+                fallos,
+                respondidas.length
+            );
+
+
+        const aciertosSinRiesgo =
+            aciertos -
+            aciertosRiesgo;
+
+
+        const fallosSinRiesgo =
+            fallos -
+            fallosRiesgo;
+
+
+        const notaConRiesgo =
+            calcularNota(
+                aciertosSinRiesgo,
+                fallosSinRiesgo,
+                respondidas.length
+            );
+
+
+        mostrarResultados({
+
+            detalle,
+
+            aciertos,
+
+            fallos,
+
+            blancas,
+
+            aciertosRiesgo,
+
+            fallosRiesgo,
+
+            nota,
+
+            notaConRiesgo
+
+        });
+
+    }
+
+
+    /* =========================================================
+       RESULTADOS
+       ========================================================= */
+
+    function mostrarResultados(
+        resultado
+    ) {
+
+        const {
+
+            detalle,
+
+            aciertos,
+
+            fallos,
+
+            blancas,
+
+            aciertosRiesgo,
+
+            fallosRiesgo,
+
+            nota,
+
+            notaConRiesgo
+
+        } = resultado;
+
+
+        mostrar(`
+
+            <div class="test-results">
+
+                <div class="results-header">
 
                     <div class="results-title">
 
@@ -879,33 +2104,38 @@
                         </span>
 
                         <h2>
-                            Resultados
+                            Resultado
                         </h2>
 
                         <p>
-                            Revisa tu resultado y tus respuestas.
+                            Revisa tus respuestas y comprueba tu rendimiento.
                         </p>
 
                     </div>
 
-                </header>
 
-                <section class="results-score-card">
+                    <button
+                        type="button"
+                        class="test-close-button"
+                        id="cerrar-test-resultados">
 
-                    <!-- ================================= -->
-                    <!-- NOTA REAL -->
-                    <!-- ================================= -->
+                        ×
+
+                    </button>
+
+                </div>
+
+
+                <div class="results-score-card">
 
                     <div class="results-score-main">
 
                         <span>
-                            TU NOTA
+                            NOTA
                         </span>
 
                         <strong>
-                            ${nota
-                                .toFixed(2)
-                                .replace(".", ",")}
+                            ${nota.toFixed(2)}
                         </strong>
 
                         <small>
@@ -914,75 +2144,37 @@
 
                     </div>
 
-                    <!-- ================================= -->
-                    <!-- NOTA CON RIESGO -->
-                    <!-- ================================= -->
-
-                    <div class="results-score-main risk-score">
-
-                        <span>
-                            ⚡ NOTA CON RIESGO
-                        </span>
-
-                        <strong>
-                            ${notaConRiesgo
-                                .toFixed(2)
-                                .replace(".", ",")}
-                        </strong>
-
-                        <small>
-                            sobre 10
-                        </small>
-
-                    </div>
-
-                    <!-- ================================= -->
-                    <!-- ESTADÍSTICAS -->
-                    <!-- ================================= -->
 
                     <div class="results-stat-grid">
 
                         <div class="result-stat correct">
+
                             <strong>
                                 ${aciertos}
                             </strong>
 
                             <span>
-                                Acertadas
+                                Aciertos
                             </span>
+
                         </div>
 
-                        <div class="result-stat risk-correct">
-                            <strong>
-                                ${aciertosRiesgo}
-                            </strong>
-
-                            <span>
-                                Acertadas con riesgo
-                            </span>
-                        </div>
 
                         <div class="result-stat incorrect">
+
                             <strong>
                                 ${fallos}
                             </strong>
 
                             <span>
-                                Falladas
+                                Fallos
                             </span>
+
                         </div>
 
-                        <div class="result-stat risk-incorrect">
-                            <strong>
-                                ${fallosRiesgo}
-                            </strong>
-
-                            <span>
-                                Falladas con riesgo
-                            </span>
-                        </div>
 
                         <div class="result-stat blank">
+
                             <strong>
                                 ${blancas}
                             </strong>
@@ -990,114 +2182,198 @@
                             <span>
                                 En blanco
                             </span>
+
+                        </div>
+
+
+                        <div class="result-stat risk-correct">
+
+                            <strong>
+                                ${aciertosRiesgo}
+                            </strong>
+
+                            <span>
+                                Aciertos con riesgo
+                            </span>
+
+                        </div>
+
+
+                        <div class="result-stat risk-incorrect">
+
+                            <strong>
+                                ${fallosRiesgo}
+                            </strong>
+
+                            <span>
+                                Fallos con riesgo
+                            </span>
+
+                        </div>
+
+
+                        <div class="result-stat">
+
+                            <strong>
+                                ${notaConRiesgo.toFixed(2)}
+                            </strong>
+
+                            <span>
+                                Nota sin riesgos
+                            </span>
+
                         </div>
 
                     </div>
 
-                </section>
+                </div>
 
-                <section class="results-questions">
+
+                <div class="results-questions">
 
                     <div class="results-section-heading">
 
                         <div>
 
                             <span>
-                                PREGUNTAS
+                                RESUMEN
                             </span>
 
                             <h3>
-                                Revisión del test
+                                Preguntas
                             </h3>
+
+                            <p>
+                                Pulsa sobre una pregunta para revisarla.
+                            </p>
 
                         </div>
 
                     </div>
 
+
                     <div class="results-grid">
 
-                        ${detalle
-                            .map((d, i) => {
+                        ${detalle.map(
+                            (item, indice) => {
 
-                                let clase = "blank";
+                                let clase =
+                                    "result-question ";
 
-                                if (d.respuesta) {
-                                    clase =
-                                        d.acertada
-                                            ? "correct"
-                                            : "incorrect";
+                                if (!item.respuesta) {
+
+                                    clase +=
+                                        "blank";
+
+                                } else if (
+                                    item.acertada
+                                ) {
+
+                                    clase +=
+                                        "correct";
+
+                                } else {
+
+                                    clase +=
+                                        "incorrect";
+
                                 }
 
+
                                 return `
+
                                     <button
                                         type="button"
-                                        class="result-question ${clase}"
-                                        data-ir-pregunta="${i}"
-                                    >
+                                        class="${clase}"
+                                        data-revision="${indice}">
 
-                                        <span>
-                                            ${i + 1}
-                                        </span>
+                                        ${indice + 1}
 
                                         ${
-                                            d.riesgo
-                                                ? `<b>⚡</b>`
+                                            item.riesgo
+                                                ? "<b>!</b>"
                                                 : ""
                                         }
 
                                     </button>
+
                                 `;
-                            })
-                            .join("")}
+
+                            }
+                        ).join("")}
 
                     </div>
+
 
                     <div class="results-legend">
 
                         <span class="legend-correct">
+
                             <i></i>
-                            Correcta
+
+                            Acierto
+
                         </span>
+
 
                         <span class="legend-incorrect">
+
                             <i></i>
-                            Fallada
+
+                            Fallo
+
                         </span>
+
 
                         <span class="legend-blank">
+
                             <i></i>
+
                             En blanco
+
                         </span>
 
+
                         <span class="legend-risk">
-                            ⚡ Riesgo
+
+                            ⚠ Riesgo
+
                         </span>
 
                     </div>
 
-                </section>
+                </div>
 
-                <section
-                    id="revision-preguntas"
-                    class="results-review"
-                >
-                    ${renderRevision(detalle, 0)}
-                </section>
 
-                <nav class="results-navigation">
+                <div class="results-review">
+
+                    <div
+                        id="revision-container"
+                        class="results-review-card">
+                    </div>
+
+                </div>
+
+
+                <div class="results-navigation">
 
                     <button
                         type="button"
                         class="navigation-button secondary"
                         id="revision-anterior"
-                        disabled
-                    >
-                        ← Anterior
+                        disabled>
+
+                        Anterior
+
                     </button>
 
+
                     <span id="contador-revision">
+
                         Pregunta 1 de ${detalle.length}
+
                     </span>
+
 
                     <button
                         type="button"
@@ -1107,245 +2383,523 @@
                             detalle.length <= 1
                                 ? "disabled"
                                 : ""
-                        }
-                    >
-                        Siguiente →
+                        }>
+
+                        Siguiente
+
                     </button>
 
-                </nav>
+                </div>
+
 
                 <div class="results-footer">
 
                     <button
                         type="button"
-                        class="test-primary-button"
-                        id="cerrar-resultados"
-                    >
+                        class="navigation-button primary"
+                        id="volver-inicio-test">
+
                         Volver al inicio
+
                     </button>
 
                 </div>
 
             </div>
+
         `);
+
 
         let indiceRevision = 0;
 
-        porId("volver-inicio").onclick = cerrar;
-        porId("cerrar-resultados").onclick = cerrar;
-
-        document
-            .querySelectorAll("[data-ir-pregunta]")
-            .forEach(boton => {
-                boton.onclick = () => {
-                    indiceRevision = Number(
-                        boton.dataset.irPregunta
-                    );
-
-                    actualizarRevision();
-
-                    porId(
-                        "revision-preguntas"
-                    ).scrollIntoView({
-                        behavior: "smooth",
-                        block: "start"
-                    });
-                };
-            });
-
-        porId("revision-anterior").onclick = () => {
-            if (indiceRevision > 0) {
-                indiceRevision--;
-                actualizarRevision();
-            }
-        };
-
-        porId("revision-siguiente").onclick = () => {
-            if (
-                indiceRevision <
-                detalle.length - 1
-            ) {
-                indiceRevision++;
-                actualizarRevision();
-            }
-        };
 
         function actualizarRevision() {
-            porId(
-                "revision-preguntas"
-            ).innerHTML =
+
+            const revision =
+                porId(
+                    "revision-container"
+                );
+
+
+            if (!revision) {
+                return;
+            }
+
+
+            revision.innerHTML =
                 renderRevision(
                     detalle,
                     indiceRevision
                 );
 
-            porId(
-                "contador-revision"
-            ).textContent =
-                `Pregunta ${
-                    indiceRevision + 1
-                } de ${detalle.length}`;
 
+            const contador =
+                porId(
+                    "contador-revision"
+                );
+
+
+            if (contador) {
+
+                contador.textContent =
+                    `Pregunta ${
+                        indiceRevision + 1
+                    } de ${detalle.length}`;
+
+            }
+
+
+            const anterior =
+                porId(
+                    "revision-anterior"
+                );
+
+
+            const siguiente =
+                porId(
+                    "revision-siguiente"
+                );
+
+
+            if (anterior) {
+
+                anterior.disabled =
+                    indiceRevision === 0;
+
+            }
+
+
+            if (siguiente) {
+
+                siguiente.disabled =
+                    indiceRevision ===
+                    detalle.length - 1;
+
+            }
+
+
+            document
+                .querySelectorAll(
+                    "[data-revision]"
+                )
+                .forEach(
+                    boton => {
+
+                        boton.addEventListener(
+                            "click",
+                            () => {
+
+                                indiceRevision =
+                                    Number(
+                                        boton.dataset
+                                            .revision
+                                    );
+
+                                actualizarRevision();
+
+                            }
+                        );
+
+                    }
+                );
+
+        }
+
+
+        const revisionAnterior =
             porId(
                 "revision-anterior"
-            ).disabled =
-                indiceRevision === 0;
+            );
 
+
+        if (revisionAnterior) {
+
+            revisionAnterior.addEventListener(
+                "click",
+                () => {
+
+                    if (
+                        indiceRevision > 0
+                    ) {
+
+                        indiceRevision--;
+
+                        actualizarRevision();
+
+                    }
+
+                }
+            );
+
+        }
+
+
+        const revisionSiguiente =
             porId(
                 "revision-siguiente"
-            ).disabled =
-                indiceRevision ===
-                detalle.length - 1;
+            );
+
+
+        if (revisionSiguiente) {
+
+            revisionSiguiente.addEventListener(
+                "click",
+                () => {
+
+                    if (
+                        indiceRevision <
+                        detalle.length - 1
+                    ) {
+
+                        indiceRevision++;
+
+                        actualizarRevision();
+
+                    }
+
+                }
+            );
+
         }
+
+
+        const volver =
+            porId(
+                "volver-inicio-test"
+            );
+
+
+        if (volver) {
+
+            volver.addEventListener(
+                "click",
+                cerrar
+            );
+
+        }
+
+
+        const cerrarResultados =
+            porId(
+                "cerrar-test-resultados"
+            );
+
+
+        if (cerrarResultados) {
+
+            cerrarResultados.addEventListener(
+                "click",
+                cerrar
+            );
+
+        }
+
+
+        actualizarRevision();
+
     }
 
-    function renderRevision(detalle, indice) {
-        const d = detalle[indice];
-        const p = d.pregunta;
+
+    /* =========================================================
+       REVISIÓN
+       ========================================================= */
+
+    function renderRevision(
+        detalle,
+        indice
+    ) {
+
+        const item =
+            detalle[indice];
+
+
+        if (!item) {
+            return "";
+        }
+
+
+        let claseEstado =
+            "blank";
+
+
+        let estadoTexto =
+            "En blanco";
+
+
+        if (item.respuesta) {
+
+            if (item.acertada) {
+
+                claseEstado =
+                    "correct";
+
+                estadoTexto =
+                    "Correcta";
+
+            } else {
+
+                claseEstado =
+                    "incorrect";
+
+                estadoTexto =
+                    "Incorrecta";
+
+            }
+
+        }
+
 
         const opciones = [
-            ["A", p.respuesta_a],
-            ["B", p.respuesta_b],
-            ["C", p.respuesta_c]
-        ].filter(
-            ([, texto]) =>
-                typeof texto === "string" &&
-                texto.trim() !== ""
-        );
 
-        let estadoClase = "blank";
-        let estadoTexto = "En blanco";
+            {
+                letra: "A",
+                texto:
+                    item.pregunta.respuesta_a
+            },
 
-        if (d.respuesta) {
-            if (d.acertada) {
-                estadoClase = "correct";
-                estadoTexto = "Correcta";
-            } else {
-                estadoClase = "incorrect";
-                estadoTexto = "Fallada";
+            {
+                letra: "B",
+                texto:
+                    item.pregunta.respuesta_b
+            },
+
+            {
+                letra: "C",
+                texto:
+                    item.pregunta.respuesta_c
             }
-        }
+
+        ];
+
 
         return `
-            <article class="results-review-card">
 
-                <div class="review-top">
+            <div class="review-top">
 
-                    <div>
+                <div>
 
-                        <span class="review-kicker">
-                            PREGUNTA ${indice + 1}
-                        </span>
+                    <span class="review-kicker">
+                        PREGUNTA ${indice + 1}
+                    </span>
 
-                        <span class="review-topic">
-                            Tema ${escapar(p.tema)}
-                        </span>
+                    <span class="review-topic">
+                        Tema ${escapar(
+                            item.pregunta.tema
+                        )}
+                    </span>
 
-                    </div>
+                </div>
 
-                    <div class="review-status ${estadoClase}">
-                        ${
-                            d.riesgo
-                                ? "⚡ "
-                                : ""
+
+                <span
+                    class="review-status ${claseEstado}">
+
+                    ${estadoTexto}
+
+                </span>
+
+            </div>
+
+
+            <h3>
+                ${escapar(
+                    item.pregunta.enunciado
+                )}
+            </h3>
+
+
+            <div class="review-options">
+
+                ${opciones.map(
+                    opcion => {
+
+                        const esCorrecta =
+                            opcion.letra ===
+                            item.correcta;
+
+
+                        const esRespuesta =
+                            opcion.letra ===
+                            item.respuesta;
+
+
+                        let clase =
+                            "review-option";
+
+
+                        let etiqueta =
+                            "";
+
+
+                        if (esCorrecta) {
+
+                            clase +=
+                                " correct-answer";
+
+                            etiqueta =
+                                "CORRECTA";
+
+                        } else if (
+                            esRespuesta
+                        ) {
+
+                            clase +=
+                                " wrong-answer";
+
+                            etiqueta =
+                                "TU RESPUESTA";
+
                         }
 
-                        ${estadoTexto}
-                    </div>
 
-                </div>
+                        return `
 
-                <h3>
-                    ${escapar(p.enunciado)}
-                </h3>
+                            <div
+                                class="${clase}">
 
-                <div class="review-options">
+                                <strong>
+                                    ${opcion.letra}
+                                </strong>
 
-                    ${opciones
-                        .map(([letra, texto]) => {
 
-                            let clase = "";
+                                <span>
+                                    ${escapar(
+                                        opcion.texto
+                                    )}
+                                </span>
 
-                            if (letra === d.correcta) {
-                                clase =
-                                    "correct-answer";
-                            }
 
-                            if (
-                                letra === d.respuesta &&
-                                letra !== d.correcta
-                            ) {
-                                clase =
-                                    "wrong-answer";
-                            }
+                                ${
+                                    etiqueta
+                                        ? `
 
-                            if (
-                                letra === d.respuesta &&
-                                letra === d.correcta
-                            ) {
-                                clase =
-                                    "correct-answer user-answer";
-                            }
+                                            <em>
+                                                ${etiqueta}
+                                            </em>
 
-                            return `
-                                <div
-                                    class="review-option ${clase}"
-                                >
+                                          `
+                                        : ""
+                                }
 
-                                    <strong>
-                                        ${letra}
-                                    </strong>
+                            </div>
 
-                                    <span>
-                                        ${escapar(texto)}
-                                    </span>
+                        `;
 
-                                    ${
-                                        letra === d.correcta
-                                            ? `
-                                                <em>
-                                                    ✓ Correcta
-                                                </em>
-                                            `
-                                            : ""
-                                    }
+                    }
+                ).join("")}
 
-                                    ${
-                                        letra === d.respuesta &&
-                                        letra !== d.correcta
-                                            ? `
-                                                <em>
-                                                    Tu respuesta
-                                                </em>
-                                            `
-                                            : ""
-                                    }
+            </div>
 
-                                </div>
-                            `;
-                        })
-                        .join("")}
-
-                </div>
-
-            </article>
         `;
+
     }
 
-    function cerrar() {
+
+    /* =========================================================
+       CERRAR
+       ========================================================= */
+
+    function cerrarConfiguracion() {
+
         const contenedor =
-            porId("test-generator-screen");
+            porId(
+                "test-generator-screen"
+            );
+
 
         if (contenedor) {
             contenedor.remove();
         }
 
+
         document.body.classList.remove(
             "test-generator-active"
         );
+
     }
 
+
+    function cerrar() {
+
+        const contenedor =
+            porId(
+                "test-generator-screen"
+            );
+
+
+        if (contenedor) {
+            contenedor.remove();
+        }
+
+
+        document.body.classList.remove(
+            "test-generator-active"
+        );
+
+    }
+
+
+    /* =========================================================
+       API TEST FALLADOS + ESTADÍSTICAS
+       ========================================================= */
+
+    window.TestAppTestData = {
+
+    obtenerTestFallados() {
+        return [
+            ...testFallados
+        ];
+    },
+
+    establecerTestFallados(lista) {
+
+        testFallados = [];
+
+        if (!Array.isArray(lista)) {
+            return;
+        }
+
+        lista.forEach(id => {
+            registrarPreguntaFallada(id);
+        });
+    },
+
+    obtenerEstadisticas() {
+
+        return JSON.parse(
+            JSON.stringify(
+                estadisticas
+            )
+        );
+    },
+
+    establecerEstadisticas(datos) {
+
+        if (!datos || typeof datos !== "object") {
+            throw new Error(
+                "Las estadísticas importadas no son válidas."
+            );
+        }
+
+        estadisticas =
+            JSON.parse(
+                JSON.stringify(datos)
+            );
+    },
+
+    registrarResultadoPregunta
+
+};
+
+    /* =========================================================
+       API TEST GENERATOR
+       ========================================================= */
+
     window.TestAppTestGenerator = {
+
         abrir
+
     };
+
+
 })();
