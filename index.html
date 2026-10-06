@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1, viewport-fit=cover"
+    >
+
+    <meta
+        name="theme-color"
+        content="#f5f7fb"
+    >
+
+    <meta
+        name="apple-mobile-web-app-capable"
+        content="yes"
+    >
+
+    <meta
+        name="apple-mobile-web-app-status-bar-style"
+        content="default"
+    >
+
+    <meta
+        name="apple-mobile-web-app-title"
+        content="OpoTest"
+    >
+
+    <title>OpoTest</title>
+
+    <link
+        rel="manifest"
+        href="./manifest.json"
+    >
+
+    <link
+        rel="apple-touch-icon"
+        href="./icons/uip.png"
+    >
+
+    <link
+        rel="stylesheet"
+        href="./css/styles.css"
+    >
+
+
+    <!-- =====================================================
+         ESTILOS DE LA PANTALLA PRINCIPAL
+         ===================================================== -->
+
+    <style>
+
+        :root {
+            --home-bg: #f5f7fb;
+            --home-card: #ffffff;
+            --home-text: #172033;
+            --home-muted: #64748b;
+            --home-border: #e7ebf2;
+            --home-blue: #2563eb;
+            --home-blue-dark: #1d4ed8;
+            --home-blue-soft: #eff6ff;
+            --home-green: #16a34a;
+            --home-red: #dc2626;
+            --home-shadow:
+                0 12px 35px rgba(15, 23, 42, .08);
+            --home-shadow-hover:
+                0 18px 45px rgba(15, 23, 42, .13);
+        }
+
+
+        * {
+            box-sizing: border-box;
+        }
+
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100%;
+        }
+
+
+        body {
+            background: var(--home-bg);
+            color: var(--home-text);
+        }
+
+
+        #app {
+            min-height: 100vh;
+        }
+
+
+        /* =================================================
+           CABECERA
+           ================================================= */
+
+        .app-header {
+            width: 100%;
+            padding:
+                max(24px, env(safe-area-inset-top))
+                24px
+                24px;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #ffffff 0%,
+                    #f8faff 100%
+                );
+
+            border-bottom:
+                1px solid var(--home-border);
+
+            position: relative;
+            z-index: 2;
+        }
+
+
+        .app-header-inner {
+            width: min(1120px, 100%);
+            margin: 0 auto;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+
+        .brand-logo {
+            width: 52px;
+            height: 52px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 16px;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #2563eb,
+                    #4f46e5
+                );
+
+            color: white;
+
+            font-size: 25px;
+
+            box-shadow:
+                0 8px 20px
+                rgba(37, 99, 235, .25);
+        }
+
+
+        .brand-text h1 {
+            margin: 0;
+
+            font-size: 23px;
+            line-height: 1.1;
+            font-weight: 800;
+
+            letter-spacing: -.4px;
+        }
+
+
+        .brand-text p {
+            margin: 5px 0 0;
+
+            color: var(--home-muted);
+
+            font-size: 14px;
+        }
+
+
+        .offline-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+
+            padding: 9px 13px;
+
+            border-radius: 999px;
+
+            background: #f0fdf4;
+            color: #15803d;
+
+            border: 1px solid #dcfce7;
+
+            font-size: 13px;
+            font-weight: 700;
+
+            white-space: nowrap;
+        }
+
+
+        .offline-dot {
+            width: 8px;
+            height: 8px;
+
+            border-radius: 50%;
+
+            background: #22c55e;
+
+            box-shadow:
+                0 0 0 4px
+                rgba(34, 197, 94, .12);
+        }
+
+
+        /* =================================================
+           CONTENIDO PRINCIPAL
+           ================================================= */
+
+        #main-content {
+            width: min(1120px, 100%);
+            margin: 0 auto;
+
+            padding:
+                36px 24px
+                calc(50px + env(safe-area-inset-bottom));
+        }
+
+
+        .welcome {
+            margin-bottom: 28px;
+        }
+
+
+        .welcome h2 {
+            margin: 0;
+
+            font-size: clamp(28px, 5vw, 38px);
+            line-height: 1.1;
+
+            letter-spacing: -.8px;
+        }
+
+
+        .welcome p {
+            margin: 10px 0 0;
+
+            max-width: 650px;
+
+            color: var(--home-muted);
+
+            font-size: 16px;
+            line-height: 1.55;
+        }
+
+
+        /* =================================================
+           TARJETAS PRINCIPALES
+           ================================================= */
+
+        .home-grid {
+            display: grid;
+
+            grid-template-columns:
+                repeat(2, minmax(0, 1fr));
+
+            gap: 18px;
+
+            margin-bottom: 28px;
+        }
+
+
+        .menu-card {
+            position: relative;
+
+            width: 100%;
+            min-height: 178px;
+
+            padding: 24px;
+
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: space-between;
+
+            text-align: left;
+
+            border: 1px solid var(--home-border);
+            border-radius: 22px;
+
+            background: var(--home-card);
+
+            color: var(--home-text);
+
+            box-shadow: var(--home-shadow);
+
+            cursor: pointer;
+
+            transition:
+                transform .18s ease,
+                box-shadow .18s ease,
+                border-color .18s ease;
+        }
+
+
+        .menu-card:hover {
+            transform: translateY(-3px);
+
+            box-shadow:
+                var(--home-shadow-hover);
+
+            border-color: #d7def0;
+        }
+
+
+        .menu-card:active {
+            transform: translateY(0);
+        }
+
+
+        .menu-card.featured {
+            background:
+                linear-gradient(
+                    135deg,
+                    #2563eb 0%,
+                    #4338ca 100%
+                );
+
+            color: white;
+
+            border-color: transparent;
+
+            box-shadow:
+                0 16px 40px
+                rgba(37, 99, 235, .22);
+        }
+
+
+        .menu-card-icon {
+            width: 50px;
+            height: 50px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 15px;
+
+            background: var(--home-blue-soft);
+
+            font-size: 25px;
+        }
+
+
+        .featured .menu-card-icon {
+            background:
+                rgba(255,255,255,.16);
+        }
+
+
+        .menu-card-content {
+            margin-top: 20px;
+        }
+
+
+        .menu-card h3 {
+            margin: 0;
+
+            font-size: 20px;
+            line-height: 1.2;
+
+            font-weight: 800;
+        }
+
+
+        .menu-card p {
+            margin: 7px 0 0;
+
+            color: var(--home-muted);
+
+            font-size: 14px;
+            line-height: 1.45;
+        }
+
+
+        .featured p {
+            color:
+                rgba(255,255,255,.78);
+        }
+
+
+        .menu-card-arrow {
+            position: absolute;
+
+            top: 25px;
+            right: 25px;
+
+            font-size: 21px;
+
+            opacity: .35;
+        }
+
+
+        .featured .menu-card-arrow {
+            opacity: .8;
+        }
+
+
+        /* =================================================
+           DATOS / HERRAMIENTAS
+           ================================================= */
+
+        .tools-section {
+            padding: 24px;
+
+            border:
+                1px solid var(--home-border);
+
+            border-radius: 22px;
+
+            background: white;
+
+            box-shadow:
+                0 8px 25px
+                rgba(15, 23, 42, .045);
+        }
+
+
+        .tools-section h2 {
+            margin: 0;
+
+            font-size: 18px;
+            font-weight: 800;
+        }
+
+
+        .tools-section > p {
+            margin: 6px 0 18px;
+
+            color: var(--home-muted);
+
+            font-size: 14px;
+        }
+
+
+        .tools-grid {
+            display: grid;
+
+            grid-template-columns:
+                repeat(2, minmax(0, 1fr));
+
+            gap: 12px;
+        }
+
+
+        .tool-button {
+            min-height: 62px;
+
+            padding: 14px 16px;
+
+            display: flex;
+            align-items: center;
+            gap: 12px;
+
+            border: 1px solid var(--home-border);
+            border-radius: 15px;
+
+            background: #fafbfe;
+
+            color: var(--home-text);
+
+            font-size: 14px;
+            font-weight: 700;
+
+            cursor: pointer;
+
+            transition:
+                background .15s ease,
+                border-color .15s ease,
+                transform .15s ease;
+        }
+
+
+        .tool-button:hover {
+            background: #f4f7ff;
+            border-color: #cdd8f3;
+            transform: translateY(-1px);
+        }
+
+
+        /* =================================================
+           ESTADO OFFLINE
+           ================================================= */
+
+        .offline-status {
+            margin-top: 18px;
+
+            display: flex;
+            align-items: center;
+            gap: 13px;
+
+            padding: 15px 18px;
+
+            border-radius: 15px;
+
+            background: #ffffff;
+
+            border:
+                1px solid var(--home-border);
+        }
+
+
+        .offline-status .status-indicator {
+            width: 10px;
+            height: 10px;
+
+            flex: 0 0 auto;
+
+            border-radius: 50%;
+
+            background: #22c55e;
+
+            box-shadow:
+                0 0 0 5px
+                rgba(34,197,94,.10);
+        }
+
+
+        .offline-status strong {
+            display: block;
+
+            font-size: 13px;
+        }
+
+
+        .offline-status p {
+            margin: 3px 0 0;
+
+            color: var(--home-muted);
+
+            font-size: 12px;
+        }
+
+
+        /* =================================================
+           TEST: PANTALLA INDEPENDIENTE
+           ================================================= */
+
+        /*
+         * Cuando se abre el test, app.js/test-generator.js
+         * ocultan la pantalla principal y muestran #pantalla-test.
+         */
+
+        #pantalla-test {
+            min-height: 100vh;
+
+            background:
+                var(--home-bg);
+        }
+
+
+        #main-content.test-hidden {
+            display: none;
+        }
+
+
+        /* =================================================
+           IPAD / TABLET
+           ================================================= */
+
+        @media (min-width: 900px) {
+
+            .home-grid {
+                grid-template-columns:
+                    repeat(4, minmax(0, 1fr));
+            }
+
+
+            .menu-card {
+                min-height: 220px;
+            }
+
+
+            .menu-card:first-child,
+            .menu-card:nth-child(2) {
+                grid-column: span 2;
+            }
+
+
+            .menu-card:nth-child(3),
+            .menu-card:nth-child(4) {
+                grid-column: span 2;
+            }
+        }
+
+
+        @media (max-width: 700px) {
+
+            .app-header {
+                padding-left: 18px;
+                padding-right: 18px;
+            }
+
+
+            #main-content {
+                padding-left: 18px;
+                padding-right: 18px;
+            }
+
+
+            .offline-pill {
+                display: none;
+            }
+
+
+            .home-grid {
+                grid-template-columns: 1fr;
+            }
+
+
+            .tools-grid {
+                grid-template-columns: 1fr;
+            }
+
+
+            .menu-card {
+                min-height: 155px;
+            }
+        }
+
+
+        @media (max-width: 430px) {
+
+            .brand-logo {
+                width: 46px;
+                height: 46px;
+                border-radius: 14px;
+            }
+
+
+            .brand-text h1 {
+                font-size: 21px;
+            }
+
+
+            .welcome h2 {
+                font-size: 30px;
+            }
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+<div id="app">
+
+
+    <!-- =====================================================
+         PANTALLA PRINCIPAL
+         ===================================================== -->
+
+    <header class="app-header">
+
+        <div class="app-header-inner">
+
+            <div class="brand">
+
+                <div class="brand-logo">
+                    📝
+                </div>
+
+                <div class="brand-text">
+
+                    <h1>
+                        OpoTest
+                    </h1>
+
+                    <p>
+                        Preparación y entrenamiento
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="offline-pill">
+
+                <span class="offline-dot"></span>
+
+                <span>
+                    Disponible sin conexión
+                </span>
+
+            </div>
+
+        </div>
+
+    </header>
+
+
+    <main id="main-content">
+
+        <section class="home-grid">
+
+
+            <button
+                type="button"
+                class="menu-card featured"
+                data-route="exams">
+
+                <span class="menu-card-icon">
+                    📚
+                </span>
+
+                <span class="menu-card-content">
+
+                    <h3>
+                        Exámenes globales
+                    </h3>
+
+                    <p>
+                        Realiza exámenes completos
+                        y pon a prueba todo el temario.
+                    </p>
+
+                </span>
+
+                <span class="menu-card-arrow">
+                    →
+                </span>
+
+            </button>
+
+
+            <button
+                type="button"
+                class="menu-card"
+                data-route="custom">
+
+                <span class="menu-card-icon">
+                    🎯
+                </span>
+
+                <span class="menu-card-content">
+
+                    <h3>
+                        Test a la carta
+                    </h3>
+
+                    <p>
+                        Selecciona los temas y el número
+                        de preguntas que quieras.
+                    </p>
+
+                </span>
+
+                <span class="menu-card-arrow">
+                    →
+                </span>
+
+            </button>
+
+
+            <button
+                type="button"
+                class="menu-card"
+                data-route="failed">
+
+                <span class="menu-card-icon">
+                    ❌
+                </span>
+
+                <span class="menu-card-content">
+
+                    <h3>
+                        Test fallados
+                    </h3>
+
+                    <p>
+                        Repasa las preguntas que
+                        necesitas reforzar.
+                    </p>
+
+                </span>
+
+                <span class="menu-card-arrow">
+                    →
+                </span>
+
+            </button>
+
+
+            <button
+                type="button"
+                class="menu-card"
+                data-route="statistics">
+
+                <span class="menu-card-icon">
+                    📊
+                </span>
+
+                <span class="menu-card-content">
+
+                    <h3>
+                        Estadísticas
+                    </h3>
+
+                    <p>
+                        Consulta tu evolución,
+                        aciertos y fallos.
+                    </p>
+
+                </span>
+
+                <span class="menu-card-arrow">
+                    →
+                </span>
+
+            </button>
+
+
+        </section>
+
+
+        <section class="tools-section">
+
+            <h2>
+                Datos
+            </h2>
+
+            <p>
+                Importa nuevos contenidos o recupera
+                tus estadísticas.
+            </p>
+
+
+            <div class="tools-grid">
+
+                <button
+                    type="button"
+                    class="tool-button"
+                    data-route="import">
+
+                    <span>
+                        📥
+                    </span>
+
+                    <span>
+                        Importar test
+                    </span>
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="tool-button"
+                    data-route="import-statistics">
+
+                    <span>
+                        📊
+                    </span>
+
+                    <span>
+                        Importar estadísticas
+                    </span>
+
+                </button>
+
+            </div>
+
+        </section>
+
+
+        <section class="offline-status">
+
+            <span class="status-indicator"></span>
+
+            <div>
+
+                <strong>
+                    Modo offline preparado
+                </strong>
+
+                <p id="connection-status">
+                    Comprobando conexión...
+                </p>
+
+            </div>
+
+        </section>
+
+
+    </main>
+
+</div>
+
+
+<!-- =========================================================
+     JAVASCRIPT
+     ========================================================= -->
+
+<script src="./js/db.js"></script>
+
+<script src="./js/importer.js"></script>
+
+<script src="./js/test-generator.js"></script>
+
+<script src="./js/app.js"></script>
+
+
+</body>
+
+</html>
