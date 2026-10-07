@@ -418,46 +418,47 @@
 
     function registrarResultadoPregunta({
 
-        id,
+    id,
 
-        respuesta,
+    respuesta,
 
-        acertada,
+    acertada,
 
-        tema = null,
+    tema = null,
 
-        riesgo = false
+    riesgo = false,
 
-    }) {
+    registrarEstadistica = true
 
-        if (!respuesta) {
-            return;
-        }
+}) {
 
-
-        /*
-         * Actualizamos Test fallados.
-         */
-
-        if (acertada) {
-
-            eliminarPreguntaFallada(id);
-
-        } else {
-
-            moverPreguntaFalladaAlFinal(id);
-
-        }
+    if (!respuesta) {
+        return;
+    }
 
 
-        /*
-         * También guardamos esta respuesta
-         * en las estadísticas.
-         *
-         * Esto permite que las respuestas
-         * de Test fallados formen parte de
-         * la evolución.
-         */
+    /*
+     * Actualizamos Test fallados.
+     */
+
+    if (acertada) {
+
+        eliminarPreguntaFallada(id);
+
+    } else {
+
+        moverPreguntaFalladaAlFinal(id);
+
+    }
+
+
+    /*
+     * También guardamos esta respuesta
+     * en las estadísticas, salvo cuando
+     * se indique que no debe registrarse.
+     */
+
+    if (registrarEstadistica) {
 
         registrarEstadisticaPregunta({
 
@@ -475,6 +476,8 @@
         });
 
     }
+
+}
 
 
     function actualizarTestFallados(

@@ -807,7 +807,7 @@ function comprobarPreguntaFallada() {
 
         window.TestAppTestData.registrarResultadoPregunta({
 
-            id:
+           id:
                 pregunta.id,
 
             respuesta:
@@ -819,7 +819,11 @@ function comprobarPreguntaFallada() {
                 pregunta.tema,
 
             riesgo:
+                false,
+
+            registrarEstadistica:
                 false
+
 
         });
 
