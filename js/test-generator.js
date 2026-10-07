@@ -1865,35 +1865,32 @@
     /* =========================================================
        NOTA
        ========================================================= */
+function calcularNota(
+    aciertos,
+    fallos,
+    total
+) {
 
-    function calcularNota(
-        aciertos,
-        fallos,
-        total
-    ) {
-
-        if (!total) {
-            return 0;
-        }
-
-
-        const nota =
-            (
-                (
-                    aciertos -
-                    (fallos / 3)
-                ) /
-                total
-            ) *
-            10;
-
-
-        return Math.max(
-            0,
-            nota
-        );
-
+    if (!total) {
+        return 0;
     }
+
+    const nota =
+        (
+            (
+                aciertos -
+                (fallos / 2)
+            ) /
+            total
+        ) *
+        10;
+
+    return Math.max(
+        0,
+        nota
+    );
+
+}
 
 
     /* =========================================================
@@ -2016,12 +2013,12 @@
             ).length;
 
 
-        const nota =
-            calcularNota(
-                aciertos,
-                fallos,
-                respondidas.length
-            );
+        const nota = 
+            calcularNota( 
+                aciertos, 
+                fallos, 
+                detalle.length 
+            ); 
 
 
         const aciertosSinRiesgo =
@@ -2034,13 +2031,12 @@
             fallosRiesgo;
 
 
-        const notaConRiesgo =
+       const notaConRiesgo =
             calcularNota(
                 aciertosSinRiesgo,
                 fallosSinRiesgo,
-                respondidas.length
+                detalle.length
             );
-
 
         mostrarResultados({
 
@@ -2138,7 +2134,7 @@
                         </span>
 
                         <strong>
-                            ${nota.toFixed(2)}
+                            ${notaConRiesgo.toFixed(2)}
                         </strong>
 
                         <small>
@@ -2218,7 +2214,7 @@
                         <div class="result-stat">
 
                             <strong>
-                                ${notaConRiesgo.toFixed(2)}
+                               ${nota.toFixed(2)}
                             </strong>
 
                             <span>
