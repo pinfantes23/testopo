@@ -2350,10 +2350,6 @@ function mostrarTarjetaEstudio() {
                     ${escaparHTML(contenido)}
                 </div>
 
-                <span style="margin-top:30px;color:#64748b;font-size:13px;">
-                    Toca la tarjeta para ${flashcardMostrarParteB ? "volver a la pregunta" : "ver la respuesta"}
-                </span>
-
             </div>
 
             <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin-top:22px;">
