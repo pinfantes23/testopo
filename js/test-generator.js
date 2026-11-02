@@ -742,20 +742,9 @@
                     <button
                         type="button"
                         class="test-primary-button"
-                        id="crear-test">
-
-                        Crear test
-
-                    </button>
-
-                    <button
-                        type="button"
-                        class="test-secondary-button"
                         id="crear-test-rapido"
                         disabled
-                        style="margin-top:10px;width:100%;">
-
-                        ⚡ TEST RÁPIDO (sin límite)
+                       ⚡ TEST RÁPIDO (sin límite)
 
                     </button>
 
@@ -1525,8 +1514,6 @@
     function comenzarTestRapido() {
 
         actualizarConfiguracion();
-
-
         /* El TEST RÁPIDO exige seleccionar al menos un tema. */
 
         if (!temasSeleccionados.length) {
