@@ -113,9 +113,6 @@ function prepararImportador() {
 
                 console.error(error);
 
-                alert(
-                    "No se ha podido importar el archivo."
-                );
 
             }
 
@@ -185,8 +182,6 @@ async function abrirTestFallados() {
         !window.TestAppTestData ||
         typeof window.TestAppTestData.obtenerTestFallados !== "function"
     ) {
-
-        alert("No se ha podido cargar Test fallados.");
 
         return;
     }
@@ -1310,8 +1305,6 @@ function prepararFlashcards() {
     if (!boton) return;
 
     boton.addEventListener("click", function () {
-
-        alert("EL BOTÓN FLASHCARD FUNCIONA");
 
         abrirFlashcards();
 
